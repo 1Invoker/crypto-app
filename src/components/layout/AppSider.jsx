@@ -1,7 +1,7 @@
 import { Layout, Card, Statistic, List, Typography, Spin } from "antd";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
-import { fakeFetchCrypto } from "../../api";
+import { fakeFetchCrypto, fakeFetchAssets } from "../../api";
 
 const siderStyle = {
   padding: "1rem",
@@ -14,6 +14,10 @@ const data = [
   "Los Angeles battles huge wildfires.",
 ];
 
+function persentDifference(a, b) {
+  return (100 * Math.abs(a - b)) / ((a + b) / 2);
+}
+
 export default function AppSider() {
   const [loading, setLoading] = useState(false);
   const [crypto, setCrypto] = useState([]);
@@ -23,9 +27,20 @@ export default function AppSider() {
     const preload = async () => {
       setLoading(true);
       const { result } = await fakeFetchCrypto();
-      const assets = await fetchAssets();
+      const assets = await fakeFetchAssets();
 
-      setAssets(assets);
+      setAssets(
+        assets.map((asset) => {
+          const coin = result.find((c) => c.id === asset.id);
+          return {
+            grow: asset.price < coin.price,
+            growPersent: persentDifference(asset.price, coin.price),
+            totalAmount:asset.amount *coin.price,
+            totalProfit: asset.amount*coin.price - asset.amount*asset.price,
+            ...asset,
+          };
+        })
+      );
       setCrypto(result);
       setLoading(false);
     };
